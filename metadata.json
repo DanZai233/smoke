@@ -1,0 +1,8 @@
+{
+  "name": "抽了么",
+  "description": "一个幽默多端适配的记烟/戒烟应用，提供图表、数据统计与搞怪提醒。",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
