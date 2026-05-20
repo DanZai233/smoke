@@ -17,10 +17,11 @@ const ACHIEVEMENTS = [
 export function HealthTab({ records, settings }: HealthTabProps) {
   // Get time since last smoke
   const timeSinceLast = useMemo(() => {
-    if (records.length === 0) {
+    const smokeRecords = records.filter(r => r.recordType !== 'resist');
+    if (smokeRecords.length === 0) {
       return Date.now() - settings.startDate;
     }
-    const sorted = [...records].sort((a, b) => b.timestamp - a.timestamp);
+    const sorted = [...smokeRecords].sort((a, b) => b.timestamp - a.timestamp);
     return Date.now() - sorted[0].timestamp;
   }, [records, settings.startDate]);
 

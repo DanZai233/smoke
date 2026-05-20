@@ -4,6 +4,7 @@ export interface SmokeRecord {
   count: number;
   mood?: string;
   reason?: string;
+  recordType?: 'smoke' | 'resist';
 }
 
 export type ThemeType = 'graphite' | 'matcha' | 'ocean' | 'peach' | 'lavender';

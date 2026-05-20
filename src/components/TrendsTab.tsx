@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { SmokeRecord, UserSettings } from '../types';
 import { subDays, format, isSameDay, startOfMonth, getDaysInMonth, getDay, addDays, isSameMonth } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { ComposedChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
 interface TrendsTabProps {
   records: SmokeRecord[];
@@ -19,18 +19,21 @@ export function TrendsTab({ records, settings }: TrendsTabProps) {
     for (let i = 6; i >= 0; i--) {
       const date = subDays(today, i);
       const dayRecords = records.filter(r => isSameDay(r.timestamp, date));
-      const count = dayRecords.reduce((acc, r) => acc + r.count, 0);
+      const dayCount = dayRecords.filter(r => r.recordType !== 'resist').reduce((acc, r) => acc + r.count, 0);
+      const resistCount = dayRecords.filter(r => r.recordType === 'resist').length;
       
       data.push({
         date: format(date, 'eee', { locale: zhCN }),
         fullDate: format(date, 'MM/dd'),
-        count,
+        count: dayCount,
+        resist: resistCount,
       });
     }
     return data;
   }, [records, today]);
 
-  const totalSmoked = records.reduce((acc, r) => acc + r.count, 0);
+  const allSmokeRecords = records.filter(r => r.recordType !== 'resist');
+  const totalSmoked = allSmokeRecords.reduce((acc, r) => acc + r.count, 0);
   const totalCost = (totalSmoked * (settings.pricePerPack / settings.cigsPerPack)).toFixed(2);
   
   const daysSinceStart = Math.max(1, Math.ceil((Date.now() - settings.startDate) / (1000 * 60 * 60 * 24)));
@@ -48,7 +51,7 @@ export function TrendsTab({ records, settings }: TrendsTabProps) {
     }
     for (let i = 1; i <= daysInMonth; i++) {
         const currentDate = addDays(monthStart, i - 1);
-        const dayRecords = records.filter(r => isSameDay(r.timestamp, currentDate));
+        const dayRecords = records.filter(r => isSameDay(r.timestamp, currentDate) && r.recordType !== 'resist');
         const dayCount = dayRecords.reduce((acc, r) => acc + r.count, 0);
         days.push({
             dayNumber: i,
@@ -60,7 +63,7 @@ export function TrendsTab({ records, settings }: TrendsTabProps) {
     return days;
   }, [records, today, monthStart, daysInMonth, startDayOfWeek]);
 
-  const currentMonthRecords = records.filter(r => isSameMonth(r.timestamp, today));
+  const currentMonthRecords = records.filter(r => isSameMonth(r.timestamp, today) && r.recordType !== 'resist');
   const monthTotal = currentMonthRecords.reduce((acc, r) => acc + r.count, 0);
   const monthCost = (monthTotal * (settings.pricePerPack / settings.cigsPerPack)).toFixed(2);
 
@@ -99,41 +102,56 @@ export function TrendsTab({ records, settings }: TrendsTabProps) {
       </div>
 
       {/* Chart */}
-      <div className="bg-card-bg p-5 rounded-3xl shadow-sm border border-brand-light mt-4 h-72">
-        <div className="flex justify-between items-center mb-4">
-            <h3 className="text-sm font-bold text-text-main">近7天战绩</h3>
-            <span className="text-[10px] font-semibold bg-brand-light text-brand-dark px-2 py-0.5 rounded-full">
-                柱子越高，离天堂越近
-            </span>
+      <div className="bg-card-bg p-5 rounded-3xl shadow-sm border border-brand-light mt-4">
+        <div className="flex justify-between items-start mb-4">
+            <h3 className="text-sm font-bold text-text-main mt-0.5">近7天战绩</h3>
+            <div className="flex flex-col gap-1.5 items-end">
+                <span className="text-[10px] font-semibold bg-brand-main/10 text-brand-main px-2 py-0.5 rounded-full flex items-center">
+                    抽烟数量
+                </span>
+                <span className="text-[10px] font-semibold bg-brand-dark/10 text-brand-dark px-2 py-0.5 rounded-full flex items-center">
+                    克制次数
+                </span>
+            </div>
         </div>
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-            <XAxis 
-              dataKey="date" 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fontSize: 12, fill: '#9ca3af' }} 
-              dy={10}
-            />
-            <YAxis 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ fontSize: 12, fill: '#9ca3af' }}
-            />
-            <Tooltip 
-              cursor={{ fill: '#f3f4f6' }}
-              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-              labelStyle={{ color: '#4b5563', fontWeight: 'bold', marginBottom: '4px' }}
-            />
-            <ReferenceLine y={settings.dailyLimit} stroke="#ef4444" strokeDasharray="3 3" label={{ position: 'top', value: '上限', fill: '#ef4444', fontSize: 10 }} />
-            <Bar 
-              dataKey="count" 
-              fill="var(--color-brand-main)" 
-              radius={[4, 4, 0, 0]} 
-              name="抽烟数量"
-            />
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="h-56 w-full -ml-3">
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+              <XAxis 
+                dataKey="date" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 12, fill: '#9ca3af' }} 
+                dy={10}
+              />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 12, fill: '#9ca3af' }}
+              />
+              <Tooltip 
+                cursor={{ fill: '#f3f4f6' }}
+                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                labelStyle={{ color: '#4b5563', fontWeight: 'bold', marginBottom: '4px' }}
+              />
+              <ReferenceLine y={settings.dailyLimit} stroke="#ef4444" strokeDasharray="3 3" label={{ position: 'top', value: '上限', fill: '#ef4444', fontSize: 10 }} />
+              <Bar 
+                dataKey="count" 
+                fill="var(--color-brand-main)" 
+                radius={[4, 4, 0, 0]} 
+                name="抽烟数量"
+              />
+              <Line 
+                type="monotone" 
+                dataKey="resist" 
+                stroke="var(--color-brand-dark)" 
+                strokeWidth={3} 
+                dot={{ r: 4, strokeWidth: 2, fill: 'var(--color-card-bg)' }}
+                name="克制次数"
+              />
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* Monthly Stats */}

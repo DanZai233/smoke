@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { SmokeRecord, UserSettings } from '../types';
 import { getQuote, getRandomTip } from '../utils/quotes';
-import { formatDistanceToNow, isSameDay } from 'date-fns';
+import { formatDistanceToNow, isSameDay, format } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Cigarette, Flame, Wind, Clock, Sparkles } from 'lucide-react';
+import { Cigarette, Flame, Wind, Clock, Sparkles, ShieldCheck } from 'lucide-react';
 
 interface HomeTabProps {
   records: SmokeRecord[];
   settings: UserSettings;
-  onAddRecord: (count: number, mood?: string, reason?: string) => void;
+  onAddRecord: (count: number, mood?: string, reason?: string, recordType?: 'smoke' | 'resist') => void;
 }
 
 const MOODS = ['😌 平静', '😄 开心', '😠 心烦', '😭 焦虑', '🥱 疲惫'];
@@ -19,12 +19,17 @@ export function HomeTab({ records, settings, onAddRecord }: HomeTabProps) {
   const [tip, setTip] = useState(getRandomTip());
   const [showInput, setShowInput] = useState(false);
   const [showBreathe, setShowBreathe] = useState(false);
+  const [showResistAnim, setShowResistAnim] = useState(false);
   const [count, setCount] = useState(1);
   const [selectedMood, setSelectedMood] = useState(MOODS[0]);
   const [selectedReason, setSelectedReason] = useState(REASONS[0]);
+  const [isTimelineExpanded, setIsTimelineExpanded] = useState(false);
 
   const todayRecords = records.filter(r => isSameDay(r.timestamp, new Date()));
-  const todayCount = todayRecords.reduce((acc, r) => acc + r.count, 0);
+  const todaySmokeRecords = todayRecords.filter(r => r.recordType !== 'resist');
+  const todayResistRecords = todayRecords.filter(r => r.recordType === 'resist');
+  const todayCount = todaySmokeRecords.reduce((acc, r) => acc + r.count, 0);
+  const resistCount = todayResistRecords.length;
   
   const lastRecord = records.length > 0 ? records[records.length - 1] : null;
   const timeSinceLast = lastRecord 
@@ -41,12 +46,19 @@ export function HomeTab({ records, settings, onAddRecord }: HomeTabProps) {
   }, []);
 
   const handleRecord = () => {
-    onAddRecord(count, selectedMood, selectedReason);
+    onAddRecord(count, selectedMood, selectedReason, 'smoke');
     setShowInput(false);
     setCount(1);
     setSelectedMood(MOODS[0]);
     setSelectedReason(REASONS[0]);
     setTip(getRandomTip()); // change tip on record
+  };
+
+  const handleResist = () => {
+    onAddRecord(0, undefined, undefined, 'resist');
+    setShowResistAnim(true);
+    setTimeout(() => setShowResistAnim(false), 2000);
+    setTip("好样的！每一次克制，都是更强大的自己。");
   };
 
   return (
@@ -104,12 +116,17 @@ export function HomeTab({ records, settings, onAddRecord }: HomeTabProps) {
       </AnimatePresence>
 
       {/* Header Info */}
-      <div className="text-center space-y-2">
+      <div className="text-center space-y-2 z-10">
         <h2 className="text-xl font-bold text-text-main">今天战况</h2>
         <div className="text-5xl font-black text-text-main flex items-baseline justify-center">
           <span className={isOverLimit ? 'text-red-500' : 'text-text-main'}>{todayCount}</span>
           <span className="text-2xl text-text-muted font-medium ml-1">/ {settings.dailyLimit} 根</span>
         </div>
+        {resistCount > 0 && (
+          <div className="mt-2 inline-block bg-brand-main/10 text-brand-main px-3 py-1 rounded-full text-xs font-bold">
+            🛡️ 今日成功击退烟瘾 {resistCount} 次
+          </div>
+        )}
         <p className="text-sm font-medium text-text-muted italic mt-2">
           {getQuote(todayCount, settings.dailyLimit)}
         </p>
@@ -142,19 +159,47 @@ export function HomeTab({ records, settings, onAddRecord }: HomeTabProps) {
       <div className="flex flex-col items-center justify-center py-4 relative">
         <AnimatePresence mode="wait">
           {!showInput ? (
-            <motion.button
-              key="btn-smoke"
+            <motion.div
+              key="btn"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowInput(true)}
-              className="w-48 h-48 rounded-full bg-gradient-to-tr from-brand-dark to-brand-main text-white shadow-xl flex flex-col items-center justify-center space-y-2 shadow-brand-dark/20"
+              className="flex flex-col items-center justify-center space-y-6 w-full"
             >
-              <Flame size={48} className="text-orange-400 drop-shadow-md" />
-              <span className="text-2xl font-black tracking-widest">抽了</span>
-            </motion.button>
+              <div className="relative">
+                  <AnimatePresence>
+                      {showResistAnim && (
+                          <motion.div
+                             initial={{ opacity: 0, y: 0, scale: 0.5 }}
+                             animate={{ opacity: 1, y: -80, scale: 1.2 }}
+                             exit={{ opacity: 0 }}
+                             className="absolute left-1/2 -ml-16 top-0 w-32 text-center text-brand-main font-black text-xl z-50 drop-shadow-md pointer-events-none"
+                          >
+                             +1 意志力
+                          </motion.div>
+                      )}
+                  </AnimatePresence>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setShowInput(true)}
+                    className="w-48 h-48 rounded-full bg-gradient-to-tr from-brand-dark to-brand-main text-white shadow-xl flex flex-col items-center justify-center space-y-2 shadow-brand-dark/20 relative z-10"
+                  >
+                    <Flame size={48} className="text-orange-400 drop-shadow-md" />
+                    <span className="text-2xl font-black tracking-widest">抽了</span>
+                  </motion.button>
+              </div>
+
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleResist}
+                className="px-8 py-3.5 rounded-full bg-brand-light/50 border-2 border-brand-main/20 text-brand-main font-bold shadow-sm flex items-center space-x-2 active:bg-brand-main/10 transition-colors"
+              >
+                <ShieldCheck size={20} />
+                <span>我忍住了！</span>
+              </motion.button>
+            </motion.div>
           ) : (
             <motion.div
               key="input-smoke"
@@ -257,6 +302,56 @@ export function HomeTab({ records, settings, onAddRecord }: HomeTabProps) {
           </div>
         </div>
       </div>
+
+      {/* Today's Timeline */}
+      {todayRecords.length > 0 && (
+        <div className="mt-4 pb-4">
+          <h4 className="text-sm font-bold text-text-main mb-3 px-1">今日流水账</h4>
+          <div className="space-y-2">
+            {[...todayRecords]
+              .sort((a,b) => b.timestamp - a.timestamp)
+              .slice(0, isTimelineExpanded ? undefined : 20)
+              .map(r => (
+              <div key={r.id} className={`flex items-center justify-between p-3.5 rounded-2xl border ${r.recordType === 'resist' ? 'bg-brand-main/5 border-brand-main/20' : 'bg-card-bg border-brand-light'}`}>
+                <div className="flex items-center space-x-3">
+                  <div className={`p-2 rounded-xl ${r.recordType === 'resist' ? 'bg-brand-main/10 text-brand-main' : 'bg-brand-light text-text-muted'}`}>
+                     {r.recordType === 'resist' ? <ShieldCheck size={18} /> : <Cigarette size={18} />}
+                  </div>
+                  <div>
+                    <p className={`text-sm font-bold ${r.recordType === 'resist' ? 'text-brand-main' : 'text-text-main'}`}>
+                      {r.recordType === 'resist' ? '成功击退烟瘾' : `抽了 ${r.count} 根`}
+                    </p>
+                    {(r.mood || r.reason) && r.recordType !== 'resist' && (
+                      <p className="text-[11px] text-text-muted mt-0.5 font-medium">
+                        {r.mood} · {r.reason}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <span className="text-xs text-text-muted font-bold tracking-wider">
+                  {format(r.timestamp, 'HH:mm')}
+                </span>
+              </div>
+            ))}
+          </div>
+          {todayRecords.length > 20 && !isTimelineExpanded && (
+            <button
+              onClick={() => setIsTimelineExpanded(true)}
+              className="w-full mt-3 py-2 text-xs font-bold text-text-muted bg-brand-light/50 rounded-xl hover:bg-brand-light transition-colors"
+            >
+              展开更多 ({todayRecords.length - 20})
+            </button>
+          )}
+          {todayRecords.length > 20 && isTimelineExpanded && (
+            <button
+              onClick={() => setIsTimelineExpanded(false)}
+              className="w-full mt-3 py-2 text-xs font-bold text-text-muted bg-brand-light/50 rounded-xl hover:bg-brand-light transition-colors"
+            >
+              收起
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

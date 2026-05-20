@@ -29,13 +29,14 @@ export function useData() {
     setIsLoaded(true);
   }, []);
 
-  const addRecord = useCallback((count: number, mood?: string, reason?: string) => {
+  const addRecord = useCallback((count: number, mood?: string, reason?: string, recordType: 'smoke' | 'resist' = 'smoke') => {
     const newRecord: SmokeRecord = {
       id: crypto.randomUUID(),
       timestamp: Date.now(),
       count,
       mood,
       reason,
+      recordType,
     };
     setRecords((prev) => {
       const updated = [...prev, newRecord];
