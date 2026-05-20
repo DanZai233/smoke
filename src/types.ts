@@ -16,4 +16,4 @@ export interface UserSettings {
   theme: ThemeType;
 }
 
-export type TabType = 'home' | 'trends' | 'settings';
+export type TabType = 'home' | 'trends' | 'health' | 'settings';

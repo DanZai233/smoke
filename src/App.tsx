@@ -1,11 +1,12 @@
 import { useState, useEffect, ReactNode } from 'react';
-import { Home, LineChart, Settings } from 'lucide-react';
+import { Home, LineChart, Settings, HeartPulse } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { TabType } from './types';
 import { useData } from './hooks/useData';
 import { HomeTab } from './components/HomeTab';
 import { TrendsTab } from './components/TrendsTab';
 import { SettingsTab } from './components/SettingsTab';
+import { HealthTab } from './components/HealthTab';
 import logo from './assets/images/chouleme_logo_abstract_line_1779265732425.png';
 
 export default function App() {
@@ -26,6 +27,8 @@ export default function App() {
         return <HomeTab records={records} settings={settings} onAddRecord={addRecord} />;
       case 'trends':
         return <TrendsTab records={records} settings={settings} />;
+      case 'health':
+        return <HealthTab records={records} settings={settings} />;
       case 'settings':
         return <SettingsTab settings={settings} updateSettings={updateSettings} resetData={resetData} />;
     }
@@ -83,6 +86,12 @@ export default function App() {
               label="趋势" 
               isActive={activeTab === 'trends'} 
               onClick={() => setActiveTab('trends')} 
+            />
+            <NavItem 
+              icon={<HeartPulse size={24} />} 
+              label="健康" 
+              isActive={activeTab === 'health'} 
+              onClick={() => setActiveTab('health')} 
             />
             <NavItem 
               icon={<Settings size={24} />} 

@@ -4,7 +4,7 @@ import { SmokeRecord, UserSettings } from '../types';
 import { getQuote, getRandomTip } from '../utils/quotes';
 import { formatDistanceToNow, isSameDay } from 'date-fns';
 import { zhCN } from 'date-fns/locale';
-import { Cigarette, Flame, Wind, Clock } from 'lucide-react';
+import { Cigarette, Flame, Wind, Clock, Sparkles } from 'lucide-react';
 
 interface HomeTabProps {
   records: SmokeRecord[];
@@ -18,6 +18,7 @@ const REASONS = ['🚬 习惯', '🥱 无聊', '🤝 社交', '🧠 提神', '�
 export function HomeTab({ records, settings, onAddRecord }: HomeTabProps) {
   const [tip, setTip] = useState(getRandomTip());
   const [showInput, setShowInput] = useState(false);
+  const [showBreathe, setShowBreathe] = useState(false);
   const [count, setCount] = useState(1);
   const [selectedMood, setSelectedMood] = useState(MOODS[0]);
   const [selectedReason, setSelectedReason] = useState(REASONS[0]);
@@ -49,8 +50,59 @@ export function HomeTab({ records, settings, onAddRecord }: HomeTabProps) {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto px-4 py-6 space-y-8 max-w-lg mx-auto w-full">
-      
+    <div className="flex flex-col h-full overflow-y-auto px-4 py-6 space-y-8 max-w-lg mx-auto w-full pb-20 relative">
+      <AnimatePresence>
+        {showBreathe && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 bg-card-bg/95 backdrop-blur-md flex flex-col items-center justify-center -mx-4"
+          >
+            <h2 className="text-2xl font-black text-brand-main mb-2">深呼吸急救</h2>
+            <p className="text-sm text-text-muted mb-16 text-center px-8">跟着节奏深呼吸，<br/>冲动通常只持续3-5分钟。</p>
+            
+            <div className="relative w-64 h-64 flex items-center justify-center">
+              <motion.div 
+                animate={{ 
+                  scale: [1, 2, 2, 1],
+                  opacity: [0.3, 0.6, 0.6, 0.3]
+                }}
+                transition={{ 
+                  duration: 10, 
+                  repeat: Infinity,
+                  times: [0, 0.4, 0.6, 1], // Inhale(4s)-Hold(2s)-Exhale(4s)
+                  ease: "easeInOut"
+                }}
+                className="absolute w-32 h-32 rounded-full bg-brand-main blur-xl flex items-center justify-center"
+              />
+              <motion.div 
+                animate={{ 
+                  scale: [1, 1.8, 1.8, 1]
+                }}
+                transition={{ 
+                  duration: 10, 
+                  repeat: Infinity,
+                  times: [0, 0.4, 0.6, 1],
+                  ease: "easeInOut"
+                }}
+                className="absolute w-32 h-32 rounded-full border border-brand-main opacity-50"
+              />
+              <div className="z-10 text-brand-dark font-black text-xl bg-card-bg/50 w-24 h-24 rounded-full flex items-center justify-center backdrop-blur-md shadow-lg">
+                 吸气...
+              </div>
+            </div>
+
+            <button 
+              onClick={() => setShowBreathe(false)}
+              className="mt-20 px-8 py-3 rounded-full bg-brand-light text-text-main font-bold hover:bg-black/5 active:scale-95 transition-all"
+            >
+               我好多了，不抽了
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header Info */}
       <div className="text-center space-y-2">
         <h2 className="text-xl font-bold text-text-main">今天战况</h2>
@@ -78,8 +130,16 @@ export function HomeTab({ records, settings, onAddRecord }: HomeTabProps) {
         </div>
       </div>
 
+      {/* Breathing Rescue Trigger */}
+      <div className="flex justify-center -mt-2">
+         <button onClick={() => setShowBreathe(true)} className="flex items-center space-x-1.5 text-xs font-bold bg-brand-main/10 text-brand-main px-4 py-1.5 rounded-full hover:bg-brand-main/20 active:scale-95 transition-all">
+            <Sparkles size={14} />
+            <span>实在忍不住？点我急救</span>
+         </button>
+      </div>
+
       {/* Action Button */}
-      <div className="flex flex-col items-center justify-center pt-8 pb-4 relative">
+      <div className="flex flex-col items-center justify-center py-4 relative">
         <AnimatePresence mode="wait">
           {!showInput ? (
             <motion.button
