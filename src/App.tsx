@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { Home, LineChart, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { TabType } from './types';
@@ -12,8 +12,12 @@ export default function App() {
   const { records, settings, addRecord, updateSettings, resetData, isLoaded } = useData();
   const [activeTab, setActiveTab] = useState<TabType>('home');
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', settings.theme || 'graphite');
+  }, [settings.theme]);
+
   if (!isLoaded) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">加载中...</div>;
+    return <div className="min-h-screen bg-app-bg flex items-center justify-center">加载中...</div>;
   }
 
   const renderContent = () => {
@@ -28,11 +32,11 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] flex justify-center font-sans">
-      <div className="w-full max-w-md bg-white h-[100dvh] flex flex-col shadow-2xl relative overflow-hidden">
+    <div className="min-h-screen bg-app-bg flex justify-center font-sans">
+      <div className="w-full max-w-md bg-card-bg h-[100dvh] flex flex-col shadow-2xl relative overflow-hidden">
         
         {/* Top Header */}
-        <header className="px-6 py-4 flex items-center justify-between border-b border-gray-100 bg-white/80 backdrop-blur-md z-10">
+        <header className="px-6 py-4 flex items-center justify-between border-b border-brand-light bg-card-bg/80 backdrop-blur-md z-10">
           <div className="flex items-center space-x-3">
             <motion.img 
               initial={{ rotate: -10, scale: 0.9 }}
@@ -40,17 +44,17 @@ export default function App() {
               transition={{ type: 'spring', stiffness: 200, damping: 10 }}
               src={logo} 
               alt="抽了么 Logo" 
-              className="w-10 h-10 object-cover rounded-xl shadow-sm border border-gray-100" 
+              className="w-10 h-10 object-cover rounded-xl shadow-sm border border-brand-light" 
               referrerPolicy="no-referrer" 
             />
-            <h1 className="text-xl font-black text-gray-900 tracking-tight flex items-center">
-              抽了么 <span className="ml-2 text-xs font-semibold bg-gray-900 text-white px-2 py-0.5 rounded-md">PRO</span>
+            <h1 className="text-xl font-black text-text-main tracking-tight flex items-center">
+              抽了么 <span className="ml-2 text-xs font-semibold bg-brand-main text-white px-2 py-0.5 rounded-md">PRO</span>
             </h1>
           </div>
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-hidden relative bg-gray-50/50">
+        <main className="flex-1 overflow-hidden relative bg-app-bg">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -66,7 +70,7 @@ export default function App() {
         </main>
 
         {/* Bottom Navigation */}
-        <nav className="border-t border-gray-100 bg-white px-6 py-3 pb-safe z-10 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)]">
+        <nav className="border-t border-brand-light bg-card-bg px-6 py-3 pb-safe z-10 shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.05)]">
           <div className="flex justify-between items-center">
             <NavItem 
               icon={<Home size={24} />} 
@@ -95,11 +99,11 @@ export default function App() {
 }
 
 // NavItem Component
-function NavItem({ icon, label, isActive, onClick }: { icon: React.ReactNode, label: string, isActive: boolean, onClick: () => void }) {
+function NavItem({ icon, label, isActive, onClick }: { icon: ReactNode, label: string, isActive: boolean, onClick: () => void }) {
   return (
     <button 
       onClick={onClick}
-      className={`flex flex-col items-center justify-center w-16 h-12 relative ${isActive ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'}`}
+      className={`flex flex-col items-center justify-center w-16 h-12 relative transition-colors ${isActive ? 'text-brand-main' : 'text-text-muted hover:text-text-main'}`}
     >
       <motion.div
         animate={{ scale: isActive ? 1.1 : 1 }}
@@ -113,7 +117,7 @@ function NavItem({ icon, label, isActive, onClick }: { icon: React.ReactNode, la
       {isActive && (
         <motion.div 
           layoutId="nav-indicator"
-          className="absolute -top-3 w-8 h-1 bg-gray-900 rounded-b-full"
+          className="absolute -top-3 w-8 h-1 bg-brand-main rounded-b-full"
         />
       )}
     </button>

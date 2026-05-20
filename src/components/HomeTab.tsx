@@ -9,13 +9,18 @@ import { Cigarette, Flame, Wind, Clock } from 'lucide-react';
 interface HomeTabProps {
   records: SmokeRecord[];
   settings: UserSettings;
-  onAddRecord: (count: number) => void;
+  onAddRecord: (count: number, mood?: string, reason?: string) => void;
 }
+
+const MOODS = ['😌 平静', '😄 开心', '😠 心烦', '😭 焦虑', '🥱 疲惫'];
+const REASONS = ['🚬 习惯', '🥱 无聊', '🤝 社交', '🧠 提神', '🍺 喝酒', '😎 装酷'];
 
 export function HomeTab({ records, settings, onAddRecord }: HomeTabProps) {
   const [tip, setTip] = useState(getRandomTip());
   const [showInput, setShowInput] = useState(false);
   const [count, setCount] = useState(1);
+  const [selectedMood, setSelectedMood] = useState(MOODS[0]);
+  const [selectedReason, setSelectedReason] = useState(REASONS[0]);
 
   const todayRecords = records.filter(r => isSameDay(r.timestamp, new Date()));
   const todayCount = todayRecords.reduce((acc, r) => acc + r.count, 0);
@@ -35,9 +40,11 @@ export function HomeTab({ records, settings, onAddRecord }: HomeTabProps) {
   }, []);
 
   const handleRecord = () => {
-    onAddRecord(count);
+    onAddRecord(count, selectedMood, selectedReason);
     setShowInput(false);
     setCount(1);
+    setSelectedMood(MOODS[0]);
+    setSelectedReason(REASONS[0]);
     setTip(getRandomTip()); // change tip on record
   };
 
@@ -46,18 +53,18 @@ export function HomeTab({ records, settings, onAddRecord }: HomeTabProps) {
       
       {/* Header Info */}
       <div className="text-center space-y-2">
-        <h2 className="text-xl font-bold text-gray-800">今天战况</h2>
-        <div className="text-5xl font-black text-gray-900 flex items-baseline justify-center">
-          <span className={isOverLimit ? 'text-red-500' : 'text-gray-900'}>{todayCount}</span>
-          <span className="text-2xl text-gray-400 font-medium ml-1">/ {settings.dailyLimit} 根</span>
+        <h2 className="text-xl font-bold text-text-main">今天战况</h2>
+        <div className="text-5xl font-black text-text-main flex items-baseline justify-center">
+          <span className={isOverLimit ? 'text-red-500' : 'text-text-main'}>{todayCount}</span>
+          <span className="text-2xl text-text-muted font-medium ml-1">/ {settings.dailyLimit} 根</span>
         </div>
-        <p className="text-sm font-medium text-gray-500 italic mt-2">
+        <p className="text-sm font-medium text-text-muted italic mt-2">
           {getQuote(todayCount, settings.dailyLimit)}
         </p>
       </div>
 
       {/* Progress Bar */}
-      <div className="relative w-full h-6 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+      <div className="relative w-full h-6 bg-brand-light rounded-full overflow-hidden shadow-inner">
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
@@ -83,7 +90,7 @@ export function HomeTab({ records, settings, onAddRecord }: HomeTabProps) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowInput(true)}
-              className="w-48 h-48 rounded-full bg-gradient-to-tr from-gray-800 to-gray-600 text-white shadow-xl flex flex-col items-center justify-center space-y-2 shadow-gray-400/50"
+              className="w-48 h-48 rounded-full bg-gradient-to-tr from-brand-dark to-brand-main text-white shadow-xl flex flex-col items-center justify-center space-y-2 shadow-brand-dark/20"
             >
               <Flame size={48} className="text-orange-400 drop-shadow-md" />
               <span className="text-2xl font-black tracking-widest">抽了</span>
@@ -94,28 +101,67 @@ export function HomeTab({ records, settings, onAddRecord }: HomeTabProps) {
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="bg-white p-6 rounded-3xl shadow-xl w-full border border-gray-100 flex flex-col items-center"
+              className="bg-card-bg p-5 rounded-3xl shadow-xl w-full border border-brand-light flex flex-col items-center z-20"
             >
-              <h3 className="text-lg font-bold mb-4 text-gray-700">抽了几根？</h3>
+              <h3 className="text-lg font-bold mb-4 text-text-main">抽了几根？</h3>
               <div className="flex items-center space-x-6 mb-6">
                 <button 
                   onClick={() => setCount(Math.max(1, count - 1))}
-                  className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-2xl font-bold text-gray-600 hover:bg-gray-200 active:scale-95 transition-transform"
+                  className="w-12 h-12 rounded-full bg-brand-light flex items-center justify-center text-2xl font-bold text-text-main hover:bg-black/5 active:scale-95 transition-transform"
                 >-</button>
-                <span className="text-4xl font-black text-gray-800 w-12 text-center">{count}</span>
+                <span className="text-4xl font-black text-text-main w-12 text-center">{count}</span>
                 <button 
                   onClick={() => setCount(count + 1)}
-                  className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-2xl font-bold text-gray-600 hover:bg-gray-200 active:scale-95 transition-transform"
+                  className="w-12 h-12 rounded-full bg-brand-light flex items-center justify-center text-2xl font-bold text-text-main hover:bg-black/5 active:scale-95 transition-transform"
                 >+</button>
               </div>
-              <div className="flex space-x-3 w-full">
+
+              <div className="w-full mb-4">
+                <p className="text-xs font-bold text-text-muted mb-2 px-1">当前心情</p>
+                <div className="flex flex-wrap gap-2">
+                  {MOODS.map(m => (
+                    <button
+                      key={m}
+                      onClick={() => setSelectedMood(m)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                        selectedMood === m 
+                          ? 'border-brand-main bg-brand-main/10 text-brand-main' 
+                          : 'border-transparent bg-brand-light text-text-muted hover:bg-brand-light/70'
+                      }`}
+                    >
+                      {m}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="w-full mb-6">
+                <p className="text-xs font-bold text-text-muted mb-2 px-1">抽烟原因</p>
+                <div className="flex flex-wrap gap-2">
+                  {REASONS.map(r => (
+                    <button
+                      key={r}
+                      onClick={() => setSelectedReason(r)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                        selectedReason === r 
+                          ? 'border-brand-main bg-brand-main/10 text-brand-main' 
+                          : 'border-transparent bg-brand-light text-text-muted hover:bg-brand-light/70'
+                      }`}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex space-x-3 w-full mt-auto">
                 <button 
                   onClick={() => setShowInput(false)}
-                  className="flex-1 py-3 rounded-xl bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 active:scale-95 transition-colors"
+                  className="flex-1 py-3 rounded-xl bg-brand-light text-text-main font-bold hover:bg-black/5 active:scale-95 transition-colors"
                 >取消</button>
                 <button 
                   onClick={handleRecord}
-                  className="flex-1 py-3 rounded-xl bg-gray-800 text-white font-bold hover:bg-gray-700 active:scale-95 transition-colors"
+                  className="flex-1 py-3 rounded-xl bg-brand-dark text-white font-bold active:scale-95 transition-colors"
                 >确认</button>
               </div>
             </motion.div>
@@ -134,20 +180,20 @@ export function HomeTab({ records, settings, onAddRecord }: HomeTabProps) {
           <Wind size={24} className="text-emerald-500 mb-1" />
           <p className="text-xs text-emerald-800 font-medium opacity-80">今日省钱</p>
           <p className="text-sm font-bold text-emerald-900">
-            ¥{Math.max(0, ((settings.dailyLimit - todayCount) * (settings.pricePerPack / settings.cigsPerPack)).toFixed(2))}
+            ¥{Math.max(0, (settings.dailyLimit - todayCount) * (settings.pricePerPack / settings.cigsPerPack)).toFixed(2)}
           </p>
         </div>
       </div>
 
       {/* Tip Banner */}
-      <div className="bg-white border-2 border-gray-100 rounded-2xl p-5 shadow-sm mt-4">
+      <div className="bg-card-bg border-2 border-brand-light rounded-2xl p-5 shadow-sm mt-4">
         <div className="flex items-start space-x-3">
-          <div className="bg-indigo-100 p-2 rounded-xl text-indigo-500 shrink-0">
+          <div className="bg-brand-light/50 p-2 rounded-xl text-brand-main shrink-0">
             <Cigarette size={20} />
           </div>
           <div>
-            <h4 className="text-sm font-bold text-gray-800 mb-1">戒烟小贴士</h4>
-            <p className="text-sm text-gray-600 leading-relaxed">{tip}</p>
+            <h4 className="text-sm font-bold text-text-main mb-1">戒烟小贴士</h4>
+            <p className="text-sm text-text-muted leading-relaxed">{tip}</p>
           </div>
         </div>
       </div>

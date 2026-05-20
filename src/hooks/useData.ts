@@ -6,6 +6,7 @@ const defaultSettings: UserSettings = {
   pricePerPack: 20,
   cigsPerPack: 20,
   startDate: Date.now(),
+  theme: 'graphite',
 };
 
 export function useData() {
@@ -28,11 +29,13 @@ export function useData() {
     setIsLoaded(true);
   }, []);
 
-  const addRecord = useCallback((count: number) => {
+  const addRecord = useCallback((count: number, mood?: string, reason?: string) => {
     const newRecord: SmokeRecord = {
       id: crypto.randomUUID(),
       timestamp: Date.now(),
       count,
+      mood,
+      reason,
     };
     setRecords((prev) => {
       const updated = [...prev, newRecord];
@@ -50,11 +53,9 @@ export function useData() {
   }, []);
   
   const resetData = useCallback(() => {
-    if(confirm('确定要清空所有数据重新开始吗？这对戒烟可能是个好主意！')) {
-       setRecords([]);
-       updateSettings({ startDate: Date.now() });
-       localStorage.removeItem('chouleme_records');
-    }
+    setRecords([]);
+    updateSettings({ startDate: Date.now() });
+    localStorage.removeItem('chouleme_records');
   }, [updateSettings]);
 
   return { records, settings, addRecord, updateSettings, isLoaded, resetData };
