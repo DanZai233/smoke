@@ -6,6 +6,7 @@ import { useData } from './hooks/useData';
 import { HomeTab } from './components/HomeTab';
 import { TrendsTab } from './components/TrendsTab';
 import { SettingsTab } from './components/SettingsTab';
+import logo from './assets/images/chouleme_logo_abstract_line_1779265732425.png';
 
 export default function App() {
   const { records, settings, addRecord, updateSettings, resetData, isLoaded } = useData();
@@ -32,9 +33,20 @@ export default function App() {
         
         {/* Top Header */}
         <header className="px-6 py-4 flex items-center justify-between border-b border-gray-100 bg-white/80 backdrop-blur-md z-10">
-          <h1 className="text-xl font-black text-gray-900 tracking-tight flex items-center">
-            抽了么 <span className="ml-2 text-xs font-semibold bg-gray-900 text-white px-2 py-0.5 rounded-md">PRO</span>
-          </h1>
+          <div className="flex items-center space-x-3">
+            <motion.img 
+              initial={{ rotate: -10, scale: 0.9 }}
+              animate={{ rotate: 0, scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+              src={logo} 
+              alt="抽了么 Logo" 
+              className="w-10 h-10 object-cover rounded-xl shadow-sm border border-gray-100" 
+              referrerPolicy="no-referrer" 
+            />
+            <h1 className="text-xl font-black text-gray-900 tracking-tight flex items-center">
+              抽了么 <span className="ml-2 text-xs font-semibold bg-gray-900 text-white px-2 py-0.5 rounded-md">PRO</span>
+            </h1>
+          </div>
         </header>
 
         {/* Content Area */}
